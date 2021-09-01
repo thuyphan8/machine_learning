@@ -1,0 +1,56 @@
+#=======Linear Regression======
+# Load data
+library(nycflights13)
+flightData <- flights
+weatherData <- weather
+flightDataAll <- merge(flightData, weatherData, by = c('origin', 'year', 'month',
+'day', 'hour', 'time_hour'))
+
+colsToKeep <- c('dep_delay', 'origin', 'dep_time', 'temp', 'wind_speed', 'precip', 'visib')
+flightData <- flightDataAll[,colsToKeep]
+# Omit NA
+flightData <- na.omit(flightData)
+
+# Split into a training set and a test set
+set.seed(12345)
+num_train <- round(.8*nrow(flightData))
+trainInds <- sample(1:nrow(flightData), num_train)
+train <- flightData[trainInds,]
+test <- flightData[-trainInds,]
+
+# Build linear regression model
+model <- lm(dep_delay ~., train)
+summary(model)
+
+# Predict and validate
+preds <- predict(model, train)
+rmse(train$dep_delay, preds)
+
+#=======Logistic Regression========
+#Load data
+titanic_data <- read.csv('../../labs/titanic.csv')
+
+# Split into a training set and a test set
+set.seed(12345)
+num_train <- round(.8*nrow(titanic_data))
+trainInds <- sample(1:nrow(titanic_data), num_train)
+train <- titanic_data[trainInds,]
+test <- titanic_data[-trainInds,]
+
+# Fit a logistic regression model for survival
+survival.glm <- glm(survived ~ factor(pclass),
+data=train, family=binomial())
+summary(survival.glm) # Model summary
+
+# Fit a logistic regression model for survival
+# Using a bayesian fitting approach, just to illustrate the function
+survival.bayesglm <- bayesglm(survived ~ factor(pclass),
+data=train, family=binomial())
+summary(survival.bayesglm) # Model summary
+
+# Get predicted probabilities
+yhat <- predict(survival.glm, newdata=test, type="response")
+
+# Construct confusion matrix
+table(test$survived, yhat>.5)
+
